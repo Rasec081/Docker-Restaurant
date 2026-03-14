@@ -27,7 +27,8 @@ CREATE TABLE Menu (
     price               NUMERIC(10,2)   NOT NULL,
     restaurant_id       INT             NOT NULL,
 
-    CONSTRAINT FK_Menu_Restaurant FOREIGN KEY(restaurant_id) REFERENCES Restaurant(restaurant_id)
+    CONSTRAINT FK_Menu_Restaurant FOREIGN KEY(restaurant_id) REFERENCES Restaurant(restaurant_id),
+    ADD CONSTRAINT unique_dish_per_restaurant UNIQUE (restaurant_id, dish_name);
 );
 
 
@@ -38,17 +39,16 @@ CREATE TABLE Tables(
     restaurant_id       INT         NOT NULL,
 
     CONSTRAINT FK_Tables_Restaurant FOREIGN KEY (restaurant_id) REFERENCES Restaurant(restaurant_id),
-
     CONSTRAINT unique_table_per_restaurant UNIQUE (restaurant_id, table_number)
 );
 
 
 CREATE TABLE Orders (
     orders_id       SERIAL      PRIMARY KEY,
-    restaurant_id   INT         NOT NULL,
     table_id        INT         NULL,
     client_id       INT         NOT NULL,
     orders_type     VARCHAR(64) NOT NULL,
+    restaurant_id   INT         NOT NULL,
 
     CONSTRAINT FK_Orders_Restaurant FOREIGN KEY (restaurant_id) REFERENCES Restaurant(restaurant_id),
     CONSTRAINT FK_Orders_Table FOREIGN KEY (table_id) REFERENCES Tables(table_id),
