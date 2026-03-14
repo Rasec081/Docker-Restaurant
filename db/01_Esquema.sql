@@ -28,7 +28,7 @@ CREATE TABLE Menu (
     restaurant_id       INT             NOT NULL,
 
     CONSTRAINT FK_Menu_Restaurant FOREIGN KEY(restaurant_id) REFERENCES Restaurant(restaurant_id),
-    ADD CONSTRAINT unique_dish_per_restaurant UNIQUE (restaurant_id, dish_name);
+    CONSTRAINT unique_dish_per_restaurant UNIQUE (restaurant_id, dish_name)
 );
 
 
