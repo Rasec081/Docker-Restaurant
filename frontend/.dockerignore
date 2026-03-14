@@ -1,0 +1,20 @@
+#dockerignore del frontend :)
+
+#Archivos del framework
+node_modules
+build
+dist
+
+#Git
+.git
+.gitignore
+
+#env
+.env
+
+#no se que tan necesario son pero por si acaso
+.vscode
+.idea
+
+#logs dl docker
+*.log
