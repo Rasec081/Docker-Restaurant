@@ -1,0 +1,24 @@
+# dockerignore para el backend
+
+# Git
+.git
+.gitignore
+
+# env
+.env
+
+# editor
+.vscode
+.idea
+
+# logs
+*.log
+
+# tests
+*.test
+*.out
+coverage.*
+
+# OS
+.DS_Store
+Thumbs.db
