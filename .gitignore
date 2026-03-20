@@ -53,3 +53,12 @@ Thumbs.db
 # DOCKER
 # =========================
 docker-data/
+
+# =========================
+# BACKEND
+# =========================
+
+/backend/go.sum
+/backend/go.mod
+
+
