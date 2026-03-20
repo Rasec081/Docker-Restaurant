@@ -25,7 +25,7 @@ services:
     container_name: restaurant_backend
 
     ports:
-      - "${BACKEND_PORT}:8080"
+      - "${BACKEND_PORT}:8080" # Apuntando al externo 
 
     environment:
       DB_HOST: postgres

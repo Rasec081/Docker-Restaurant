@@ -60,5 +60,6 @@ docker-data/
 
 /backend/go.sum
 /backend/go.mod
+*.mod
 
 
