@@ -8,7 +8,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"restaurant-backend/internal/db"
-	"restaurant-backend/internal/handlers"
+	//"restaurant-backend/internal/handlers"
 )
 
 // La funcion que va a correr todo
@@ -36,7 +36,7 @@ func main() {
 	})
 
 	// 5. Rutas reales (handlers)
-	router.GET("/restaurants", handlers.GetRestaurants) // Ejemplo de chat
+	// router.GET("/restaurants", handlers.GetRestaurants) // Ejemplo de chat
 
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
