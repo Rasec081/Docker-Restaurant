@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"restaurant-backend/internal/db"
+	"restaurant-backend/internal/handlers"
 	//"restaurant-backend/internal/handlers"
 )
 
@@ -36,7 +37,11 @@ func main() {
 	})
 
 	// 5. Rutas reales (handlers)
-	// router.GET("/restaurants", handlers.GetRestaurants) // Ejemplo de chat
+	router.GET("/restaurants", handlers.GetRestaurants)
+
+	router.GET("/users/me", handlers.GetUserMe)
+
+	router.GET("/menus/:id", handlers.GetMenu)
 
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
