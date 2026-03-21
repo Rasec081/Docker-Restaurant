@@ -43,6 +43,8 @@ func main() {
 
 	router.GET("/menus/:id", handlers.GetMenu)
 
+	router.GET("/orders/:id", handlers.GetOrder)
+
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {

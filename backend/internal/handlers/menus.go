@@ -11,21 +11,41 @@ import (
 type Menu struct {
 	ID     int     `json:"id"`
 	Nombre string  `json:"nombrePlato"`
-	Precio float32 `json:"precio"`
+	Precio float64 `json:"precio"`
 }
 
 func GetMenu(c *gin.Context) {
-	id := c.Param("id")
+	idParam := c.Param("id")
 
-	var menu Menu
-	err := db.DB.QueryRow(
-		"SELECT dish_name, price FROM menus WHERE menu_id = $1",
-		id,
-	).Scan(&menu.Nombre, &menu.Precio)
-
+	rows, err := db.DB.Query(
+		"SELECT menu_id, dish_name, price FROM Menu WHERE restaurant_id = $1",
+		idParam,
+	)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Menú no encontrado",
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
+
+	var menu []Menu
+
+	for rows.Next() {
+		var m Menu
+		err := rows.Scan(&m.ID, &m.Nombre, &m.Precio)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		menu = append(menu, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
