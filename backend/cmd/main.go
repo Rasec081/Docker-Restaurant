@@ -53,6 +53,18 @@ func main() {
 
 	router.DELETE("/menus/:id", handlers.DeleteMenu)
 
+	router.GET("/orders/:id", handlers.GetOrder)
+
+	// POSTs
+	router.POST("/restaurants", handlers.CreateRestaurant)
+
+	router.POST("/reservations", handlers.CreateReservation)
+
+	router.POST("/orders", handlers.CreateOrder)
+
+	// DELETEs
+	router.DELETE("/reservations/:id", handlers.DeleteReservation)
+
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
@@ -60,7 +72,7 @@ func main() {
 	}
 
 	// 7. Iniciar servidor
-	log.Println("🚀 Server corriendo en puerto", port)
+	log.Println("Server corriendo en puerto", port)
 	router.Run(":" + port)
 
 	/*
