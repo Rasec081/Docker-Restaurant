@@ -9,6 +9,7 @@ import (
 
 	"restaurant-backend/internal/db"
 	"restaurant-backend/internal/handlers"
+	"restaurant-backend/internal/middleware"
 	//"restaurant-backend/internal/handlers"
 )
 
@@ -22,8 +23,11 @@ func main() {
 	// Busca en db y usa la funcion
 	db.Connect()
 
-	//
-	router := gin.Default()
+	// router := gin.Default()
+	r := gin.Default()
+
+	router := r.Group("/")
+	router.Use(middleware.JWTMiddleware())
 
 	// =========================
 	// 4. Rutas básicas
@@ -58,11 +62,11 @@ func main() {
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
-		port = "8080" // Ponerlo como dijo el profe
+		port = "8080"
 	}
 
 	// 7. Iniciar servidor
 	log.Println("Server corriendo en puerto", port)
-	router.Run(":" + port)
+	r.Run(":" + port)
 
 }
