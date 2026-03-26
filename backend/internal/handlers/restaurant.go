@@ -2,16 +2,16 @@ package handlers
 
 import (
 	"net/http"
-
 	"restaurant-backend/internal/db"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Restaurant struct {
-	ID     int    `json:"id"`
-	Nombre string `json:"nombre"`
-	Estado int    `json:"estado"`
+	ID      int    `json:"id"`
+	Nombre  string `json:"nombre"`
+	Estado  int    `json:"estado"`
+	AdminID int    `json:"admin_id"`
 }
 
 func GetRestaurants(c *gin.Context) {
@@ -40,4 +40,31 @@ func GetRestaurants(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, restaurants)
+}
+
+func CreateRestaurant(c *gin.Context) {
+	var r Restaurant
+
+	if err := c.ShouldBindJSON(&r); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	_, err := db.DB.Exec(
+		"INSERT INTO restaurant (nombre, admin_id, estado) VALUES ($1, $2, $3)",
+		r.Nombre, r.AdminID, r.Estado,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Restaurant creado correctamente",
+	})
 }
