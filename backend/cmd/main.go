@@ -45,7 +45,17 @@ func main() {
 
 	router.GET("/users/me", handlers.GetUserMe)
 
+	router.PUT("/users/:id", handlers.UpdateUser)
+
+	router.DELETE("/users/:id", handlers.DeleteUser)
+
 	router.GET("/menus/:id", handlers.GetMenu)
+
+	router.POST("/menus", handlers.CreateMenu)
+
+	router.PUT("/menus/:id", handlers.UpdateMenu)
+
+	router.DELETE("/menus/:id", handlers.DeleteMenu)
 
 	router.GET("/orders/:id", handlers.GetOrder)
 
@@ -68,5 +78,12 @@ func main() {
 	// 7. Iniciar servidor
 	log.Println("Server corriendo en puerto", port)
 	r.Run(":" + port)
+
+	/*
+		#################################################
+		nota: si el usuario tiene una orden pendiente, no
+		se puede eliminar, independinetemente de su rol
+		#################################################
+	*/
 
 }
