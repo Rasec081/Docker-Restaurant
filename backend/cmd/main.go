@@ -23,51 +23,52 @@ func main() {
 	// Busca en db y usa la funcion
 	db.Connect()
 
-	// router := gin.Default()
-	r := gin.Default()
+	// protected := gin.Default()
+	router := gin.Default()
 
-	router := r.Group("/")
-	router.Use(middleware.JWTMiddleware())
+	protected := router.Group("/")
+	protected.Use(middleware.JWTMiddleware())
 
 	// =========================
 	// 4. Rutas básicas
 	// =========================
 
 	// health check
-	router.GET("/ping", func(c *gin.Context) {
+	protected.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
 	// 5. Rutas reales (handlers)
-	router.GET("/restaurants", handlers.GetRestaurants)
+	protected.GET("/restaurants", handlers.GetRestaurants)
 
-	router.GET("/users/me", handlers.GetUserMe)
+	protected.GET("/users/me", handlers.GetUserMe)
 
-	router.PUT("/users/:id", handlers.UpdateUser)
+	protected.GET("/menus/:id", handlers.GetMenu)
 
-	router.DELETE("/users/:id", handlers.DeleteUser)
-
-	router.GET("/menus/:id", handlers.GetMenu)
-
-	router.POST("/menus", handlers.CreateMenu)
-
-	router.PUT("/menus/:id", handlers.UpdateMenu)
-
-	router.DELETE("/menus/:id", handlers.DeleteMenu)
-
-	router.GET("/orders/:id", handlers.GetOrder)
+	protected.GET("/orders/:id", handlers.GetOrder)
 
 	// POSTs
-	router.POST("/restaurants", handlers.CreateRestaurant)
+	protected.POST("/restaurants", handlers.CreateRestaurant)
 
-	router.POST("/reservations", handlers.CreateReservation)
+	protected.POST("/reservations", handlers.CreateReservation)
 
-	router.POST("/orders", handlers.CreateOrder)
+	protected.POST("/orders", handlers.CreateOrder)
+
+	protected.POST("/menus", handlers.CreateMenu)
+
+	// PUTs
+	protected.PUT("/users/:id", handlers.UpdateUser)
+
+	protected.PUT("/menus/:id", handlers.UpdateMenu)
 
 	// DELETEs
-	router.DELETE("/reservations/:id", handlers.DeleteReservation)
+	protected.DELETE("/reservations/:id", handlers.DeleteReservation)
+
+	protected.DELETE("/menus/:id", handlers.DeleteMenu)
+
+	protected.DELETE("/users/:id", handlers.DeleteUser)
 
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
@@ -77,7 +78,7 @@ func main() {
 
 	// 7. Iniciar servidor
 	log.Println("Server corriendo en puerto", port)
-	r.Run(":" + port)
+	router.Run(":" + port)
 
 	/*
 		#################################################
