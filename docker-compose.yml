@@ -34,6 +34,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
 
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: restaurant-realm
+      KEYCLOAK_CLIENT_ID: restaurant-client
+      KEYCLOAK_CLIENT_SECRET: ""
+
     depends_on:
       - postgres
       - keycloak
@@ -41,12 +46,15 @@ services:
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:24.0
-    command: start-dev
+    command: start-dev --import-realm 
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8081:8080"
+
+    volumes:
+          - ./docker-content/keycloak:/opt/keycloak/data/import
 
 volumes:
   postgres_data:

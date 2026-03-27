@@ -34,7 +34,7 @@ func main() {
 	// =========================
 
 	// health check
-	protected.GET("/ping", func(c *gin.Context) {
+	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
@@ -50,7 +50,7 @@ func main() {
 	protected.GET("/orders/:id", handlers.GetOrder)
 
 	// POSTs
-	router.POST("/auth/register", handlers.Register)
+	router.POST("/auth/register", handlers.Register) //:contentReference[oaicite:4]{index=4}
 
 	protected.POST("/restaurants", handlers.CreateRestaurant)
 
@@ -73,7 +73,7 @@ func main() {
 	protected.DELETE("/users/:id", handlers.DeleteUser)
 
 	//auth
-	router.POST("/login", handlers.Login)
+	router.POST("/auth/login", handlers.Login)
 
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"restaurant-backend/internal/services"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,6 +47,10 @@ func Register(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
+
+	// =========================
+	// 1. Leer JSON
+	// =========================
 	var input LoginRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -62,6 +67,9 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// =========================
+	// 2. Variables de entorno
+	// =========================
 	keycloakURL := os.Getenv("KEYCLOAK_URL")
 	realm := os.Getenv("KEYCLOAK_REALM")
 	clientID := os.Getenv("KEYCLOAK_CLIENT_ID")
@@ -69,6 +77,9 @@ func Login(c *gin.Context) {
 
 	tokenURL := keycloakURL + "/realms/" + realm + "/protocol/openid-connect/token"
 
+	// =========================
+	// 3. Crear body (form-data)
+	// =========================
 	form := url.Values{}
 	form.Set("grant_type", "password")
 	form.Set("client_id", clientID)
@@ -79,6 +90,9 @@ func Login(c *gin.Context) {
 		form.Set("client_secret", clientSecret)
 	}
 
+	// =========================
+	// 4. Crear request
+	// =========================
 	req, err := http.NewRequest("POST", tokenURL, bytes.NewBufferString(form.Encode()))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -90,7 +104,20 @@ func Login(c *gin.Context) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+
+	// =========================
+	// 5. Retry (IMPORTANTE)
+	// =========================
+	var resp *http.Response
+
+	for i := 0; i < 5; i++ {
+		resp, err = client.Do(req)
+		if err == nil {
+			break
+		}
+		time.Sleep(3 * time.Second)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "No se pudo conectar con Keycloak",
@@ -99,6 +126,9 @@ func Login(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
+	// =========================
+	// 6. Leer respuesta
+	// =========================
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -107,6 +137,9 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// =========================
+	// 7. Manejar error login
+	// =========================
 	if resp.StatusCode != http.StatusOK {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error":   "Credenciales inválidas",
@@ -115,6 +148,9 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// =========================
+	// 8. Parsear token
+	// =========================
 	var tokenResponse map[string]interface{}
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -123,5 +159,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// =========================
+	// 9. Respuesta final
+	// =========================
 	c.JSON(http.StatusOK, tokenResponse)
 }
