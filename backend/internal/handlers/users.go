@@ -91,6 +91,24 @@ func UpdateUser(c *gin.Context) {
 /*
 funcion del delete
 */
+
+/*
+como probarlo:
+
+1- haga un build del compose
+
+2- nos metemos como si fuera sql con el comando: docker exec -it restaurant_db psql -U postgres -d restaurantdb
+
+3- agregamos un usuario de prueba con el comando:
+INSERT INTO Users (nombre, role_id)
+VALUES ('Test Delete', 1);
+
+4- verificamos que se agregó con el comando: SELECT * FROM Users;
+
+5- desde thunder client ejecutamos el delete con la url: http://localhost:8080/users/2 segun el id
+
+6- verificamos que se borró con el comando: SELECT * FROM Users;
+*/
 func DeleteUser(c *gin.Context) {
 
 	id := c.Param("id")
@@ -102,7 +120,7 @@ func DeleteUser(c *gin.Context) {
 
 	result, err := db.DB.Exec(query, id)
 
-	// 🔴 Manejo de errores
+	//Manejo de errores
 	if err != nil {
 
 		// Error de foreign key (como el que te salió)
@@ -120,7 +138,7 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// 🟡 Verificar si realmente borró algo
+	//Verificar si realmente borró algo
 	rowsAffected, _ := result.RowsAffected()
 
 	if rowsAffected == 0 {
@@ -130,7 +148,7 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// 🟢 Éxito
+	//se logro
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Usuario eliminado correctamente",
 	})
