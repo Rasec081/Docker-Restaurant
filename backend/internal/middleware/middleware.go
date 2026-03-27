@@ -11,7 +11,7 @@ import (
 
 func JWTMiddleware() gin.HandlerFunc {
 
-	jwksURL := "http://localhost:8081/realms/restaurant-realm/protocol/openid-connect/certs"
+	jwksURL := "http://localhost:8080/realms/restaurant-realm/protocol/openid-connect/certs"
 
 	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
 	if err != nil {

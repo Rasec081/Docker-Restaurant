@@ -70,6 +70,9 @@ func main() {
 
 	protected.DELETE("/users/:id", handlers.DeleteUser)
 
+	//auth
+	router.POST("/login", handlers.Login)
+
 	// 6. Puerto dinámico
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
