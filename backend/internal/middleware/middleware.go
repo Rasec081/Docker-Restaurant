@@ -1,21 +1,41 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 )
 
+func loadJWKWithRetry(jwksURL string) (*keyfunc.JWKS, error) {
+	var jwks *keyfunc.JWKS
+	var err error
+
+	for i := 0; i < 10; i++ {
+		jwks, err = keyfunc.Get(jwksURL, keyfunc.Options{})
+		if err == nil {
+			log.Println("JWK cargado correctamente")
+			return jwks, nil
+		}
+
+		log.Println("Intento", i+1, ": Keycloak no listo, reintentando...")
+		time.Sleep(3 * time.Second)
+	}
+
+	return nil, err
+}
+
 func JWTMiddleware() gin.HandlerFunc {
 
-	jwksURL := "http://localhost:8080/realms/restaurant-realm/protocol/openid-connect/certs"
+	jwksURL := "http://keycloak:8080/realms/restaurant-realm/protocol/openid-connect/certs"
 
-	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
+	jwks, err := loadJWKWithRetry(jwksURL)
 	if err != nil {
-		panic("No se pudo cargar el JWK")
+		log.Println("Error cargando JWK:", err)
 	}
 
 	return func(c *gin.Context) {

@@ -50,6 +50,8 @@ func main() {
 	protected.GET("/orders/:id", handlers.GetOrder)
 
 	// POSTs
+	router.POST("/auth/register", handlers.Register)
+
 	protected.POST("/restaurants", handlers.CreateRestaurant)
 
 	protected.POST("/reservations", handlers.CreateReservation)
