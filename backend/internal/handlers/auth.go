@@ -30,10 +30,11 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	err := services.CreateUserInKeycloak(
+	_, err := services.CreateUserInKeycloak(
 		input.Username,
 		input.Email,
 		input.Password,
+		"client",
 	)
 
 	if err != nil {
