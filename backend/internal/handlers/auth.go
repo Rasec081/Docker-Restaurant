@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"restaurant-backend/internal/db"
-	"restaurant-backend/internal/services"
 	"time"
+
+	"restaurant-backend/internal/models"
+	"restaurant-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +18,35 @@ import (
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+// KeycloakService define operaciones de autenticacion externa
+type KeycloakService interface {
+	CreateUser(username, email, password, role string) (string, error)
+}
+
+// AuthHandler maneja operaciones de auth
+type AuthHandler struct {
+	UserRepo   repository.UserRepository
+	Keycloak   KeycloakService
+	HTTPClient *http.Client
+}
+
+var authHandler *AuthHandler
+
+// NewAuthHandler crea una nueva instancia
+func NewAuthHandler(userRepo repository.UserRepository, keycloakSvc KeycloakService, httpClient *http.Client) *AuthHandler {
+	return &AuthHandler{UserRepo: userRepo, Keycloak: keycloakSvc, HTTPClient: httpClient}
+}
+
+// InitAuthHandler inicializa el handler global (para rutas y tests)
+func InitAuthHandler(userRepo repository.UserRepository, keycloakSvc KeycloakService, httpClient *http.Client) {
+	authHandler = NewAuthHandler(userRepo, keycloakSvc, httpClient)
+}
+
+func getAuthHandler() *AuthHandler {
+	ensureAuthHandler()
+	return authHandler
 }
 
 // Register godoc
@@ -31,6 +61,11 @@ type LoginRequest struct {
 // @Failure 500 {object} map[string]string
 // @Router /register [post]
 func Register(c *gin.Context) {
+	getAuthHandler().Register(c)
+}
+
+// Register godoc
+func (h *AuthHandler) Register(c *gin.Context) {
 	var input struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
@@ -42,8 +77,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	if input.Username == "" || input.Email == "" || input.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username, email y password son requeridos"})
+		return
+	}
+
 	// 1. Crear en Keycloak
-	_, err := services.CreateUserInKeycloak(
+	_, err := h.Keycloak.CreateUser(
 		input.Username,
 		input.Email,
 		input.Password,
@@ -56,14 +96,11 @@ func Register(c *gin.Context) {
 	}
 
 	// 2. Crear en DB
-	var userID int
-	err = db.DB.QueryRow(
-		"INSERT INTO Users (nombre, role_id) VALUES ($1, $2) RETURNING user_id",
-		input.Username,
-		2, // client = 2
-	).Scan(&userID)
-
-	if err != nil {
+	user := models.User{
+		Nombre: input.Username,
+		RoleID: 2,
+	}
+	if err := h.UserRepo.Create(&user); err != nil {
 		c.JSON(500, gin.H{
 			"error": "usuario creado en Keycloak pero falló en DB",
 		})
@@ -72,7 +109,7 @@ func Register(c *gin.Context) {
 
 	c.JSON(201, gin.H{
 		"message": "Usuario creado correctamente",
-		"user_id": userID,
+		"user_id": user.ID,
 	})
 }
 
@@ -89,6 +126,11 @@ func Register(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /login [post]
 func Login(c *gin.Context) {
+	getAuthHandler().Login(c)
+}
+
+// Login godoc
+func (h *AuthHandler) Login(c *gin.Context) {
 
 	// =========================
 	// 1. Leer JSON
@@ -145,7 +187,10 @@ func Login(c *gin.Context) {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	client := &http.Client{}
+	client := h.HTTPClient
+	if client == nil {
+		client = http.DefaultClient
+	}
 
 	// =========================
 	// 5. Retry (IMPORTANTE)

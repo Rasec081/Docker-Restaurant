@@ -2,18 +2,34 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
-	"restaurant-backend/internal/db"
+	"restaurant-backend/internal/models"
+	"restaurant-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Order struct {
-	ID           int    `json:"id"`
-	TableID      *int   `json:"table_id"`
-	ClientID     int    `json:"client_id"`
-	OrdersType   string `json:"orders_type"`
-	RestaurantID int    `json:"restaurant_id"`
+// OrderHandler maneja operaciones de ordenes
+type OrderHandler struct {
+	OrderRepo repository.OrderRepository
+}
+
+var orderHandler *OrderHandler
+
+// NewOrderHandler crea una nueva instancia
+func NewOrderHandler(orderRepo repository.OrderRepository) *OrderHandler {
+	return &OrderHandler{OrderRepo: orderRepo}
+}
+
+// InitOrderHandler inicializa el handler global (para rutas y tests)
+func InitOrderHandler(orderRepo repository.OrderRepository) {
+	orderHandler = NewOrderHandler(orderRepo)
+}
+
+func getOrderHandler() *OrderHandler {
+	ensureOrderHandler()
+	return orderHandler
 }
 
 // GetOrder godoc
@@ -22,19 +38,25 @@ type Order struct {
 // @Tags orders
 // @Produce json
 // @Param id path int true "ID de la orden"
-// @Success 200 {object} Order
+// @Success 200 {object} models.Order
 // @Failure 404 {object} map[string]string
 // @Router /orders/{id} [get]
 func GetOrder(c *gin.Context) {
-	id := c.Param("id")
+	getOrderHandler().GetOrder(c)
+}
 
-	var o Order
+// GetOrder godoc
+func (h *OrderHandler) GetOrder(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID inválido",
+		})
+		return
+	}
 
-	err := db.DB.QueryRow(
-		"SELECT orders_id, table_id, client_id, orders_type, restaurant_id FROM Orders WHERE orders_id = $1",
-		id,
-	).Scan(&o.ID, &o.TableID, &o.ClientID, &o.OrdersType, &o.RestaurantID)
-
+	order, err := h.OrderRepo.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Orden no encontrada",
@@ -42,7 +64,7 @@ func GetOrder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, o)
+	c.JSON(http.StatusOK, order)
 }
 
 // CreateOrder godoc
@@ -51,13 +73,18 @@ func GetOrder(c *gin.Context) {
 // @Tags orders
 // @Accept json
 // @Produce json
-// @Param body body Order true "Datos de la orden"
+// @Param body body models.Order true "Datos de la orden"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /orders [post]
 func CreateOrder(c *gin.Context) {
-	var o Order
+	getOrderHandler().CreateOrder(c)
+}
+
+// CreateOrder godoc
+func (h *OrderHandler) CreateOrder(c *gin.Context) {
+	var o models.Order
 
 	if err := c.ShouldBindJSON(&o); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -66,12 +93,7 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	_, err := db.DB.Exec(
-		"INSERT INTO Orders (table_id, client_id, orders_type, restaurant_id) VALUES ($1, $2, $3, $4)",
-		o.TableID, o.ClientID, o.OrdersType, o.RestaurantID,
-	)
-
-	if err != nil {
+	if err := h.OrderRepo.Create(&o); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
