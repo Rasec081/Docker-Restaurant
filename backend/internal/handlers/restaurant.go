@@ -24,7 +24,7 @@ type Restaurant struct {
 // @Router /restaurants [get]
 func GetRestaurants(c *gin.Context) {
 
-	rows, err := db.DB.Query("SELECT restaurant_id, nombre, estado FROM restaurant")
+	rows, err := db.Database.Query("SELECT restaurant_id, nombre, estado FROM restaurant")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -71,7 +71,7 @@ func CreateRestaurant(c *gin.Context) {
 		return
 	}
 
-	_, err := db.DB.Exec(
+	_, err := db.Database.Exec(
 		"INSERT INTO restaurant (nombre, admin_id, estado) VALUES ($1, $2, $3)",
 		r.Nombre, r.AdminID, r.Estado,
 	)

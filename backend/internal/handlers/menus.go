@@ -33,7 +33,7 @@ func GetMenu(c *gin.Context) {
 
 	var menu Menu
 
-	err := db.DB.QueryRow(
+	err := db.Database.QueryRow(
 		"SELECT menu_id, dish_name, price, restaurant_id FROM Menu WHERE menu_id = $1",
 		id,
 	).Scan(&menu.ID, &menu.Nombre, &menu.Precio, &menu.RestaurantID)
@@ -89,7 +89,7 @@ func CreateMenu(c *gin.Context) {
 
 	// Insertar en DB
 	var menuID int
-	err := db.DB.QueryRow(
+	err := db.Database.QueryRow(
 		`INSERT INTO Menu (dish_name, price, restaurant_id)
 		 VALUES ($1, $2, $3)
 		 RETURNING menu_id`,
@@ -154,7 +154,7 @@ func UpdateMenu(c *gin.Context) {
 		WHERE menu_id = $4
 	`
 
-	result, err := db.DB.Exec(query, input.Nombre, input.Precio, input.RestaurantID, id)
+	result, err := db.Database.Exec(query, input.Nombre, input.Precio, input.RestaurantID, id)
 
 	if err != nil {
 
@@ -206,7 +206,7 @@ func DeleteMenu(c *gin.Context) {
 		WHERE menu_id = $1
 	`
 
-	result, err := db.DB.Exec(query, id)
+	result, err := db.Database.Exec(query, id)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key") {

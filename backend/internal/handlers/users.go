@@ -38,7 +38,7 @@ func GetUserMe(c *gin.Context) {
 
 	var user User
 
-	err := db.DB.QueryRow(
+	err := db.Database.QueryRow(
 		"SELECT user_id, nombre, role_id FROM Users WHERE nombre = $1",
 		username,
 	).Scan(&user.ID, &user.Nombre, &user.Rol)
@@ -95,7 +95,7 @@ func UpdateUser(c *gin.Context) {
 		WHERE user_id = $3
 	`
 
-	result, err := db.DB.Exec(query, input.Nombre, input.Rol, id)
+	result, err := db.Database.Exec(query, input.Nombre, input.Rol, id)
 
 	//verificacionde si funkó
 	if err != nil {
@@ -162,7 +162,7 @@ func DeleteUser(c *gin.Context) {
 		WHERE user_id = $1
 	`
 
-	result, err := db.DB.Exec(query, id)
+	result, err := db.Database.Exec(query, id)
 
 	//Manejo de errores
 	if err != nil {

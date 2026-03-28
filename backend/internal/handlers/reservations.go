@@ -36,7 +36,7 @@ func CreateReservation(c *gin.Context) {
 	}
 
 	var id int
-	err := db.DB.QueryRow(
+	err := db.Database.QueryRow(
 		"INSERT INTO Reservation (table_id, client_id, fecha, estado) VALUES ($1, $2, $3, $4) RETURNING reservation_id",
 		r.TableID, r.ClientID, r.Fecha, r.Estado,
 	).Scan(&id)
@@ -67,7 +67,7 @@ func CreateReservation(c *gin.Context) {
 func DeleteReservation(c *gin.Context) {
 	id := c.Param("id")
 
-	result, err := db.DB.Exec(
+	result, err := db.Database.Exec(
 		"DELETE FROM Reservation WHERE reservation_id = $1",
 		id,
 	)

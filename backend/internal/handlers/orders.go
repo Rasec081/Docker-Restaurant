@@ -30,7 +30,7 @@ func GetOrder(c *gin.Context) {
 
 	var o Order
 
-	err := db.DB.QueryRow(
+	err := db.Database.QueryRow(
 		"SELECT orders_id, table_id, client_id, orders_type, restaurant_id FROM Orders WHERE orders_id = $1",
 		id,
 	).Scan(&o.ID, &o.TableID, &o.ClientID, &o.OrdersType, &o.RestaurantID)
@@ -66,7 +66,7 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	_, err := db.DB.Exec(
+	_, err := db.Database.Exec(
 		"INSERT INTO Orders (table_id, client_id, orders_type, restaurant_id) VALUES ($1, $2, $3, $4)",
 		o.TableID, o.ClientID, o.OrdersType, o.RestaurantID,
 	)

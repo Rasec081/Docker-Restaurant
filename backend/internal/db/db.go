@@ -11,6 +11,13 @@ import (
 )
 
 var DB *sql.DB
+var Database DBInterface
+
+type DBInterface interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
 
 func Connect() {
 
@@ -22,6 +29,8 @@ func Connect() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 	)
+
+	Database = DB
 
 	var err error
 

@@ -57,7 +57,7 @@ func Register(c *gin.Context) {
 
 	// 2. Crear en DB
 	var userID int
-	err = db.DB.QueryRow(
+	err = db.Database.QueryRow(
 		"INSERT INTO Users (nombre, role_id) VALUES ($1, $2) RETURNING user_id",
 		input.Username,
 		2, // client = 2
