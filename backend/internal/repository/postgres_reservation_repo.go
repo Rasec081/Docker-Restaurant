@@ -35,6 +35,19 @@ func (r *PostgresReservationRepository) Delete(id int) error {
 	return nil
 }
 
+func (r *PostgresReservationRepository) IsTableAvailable(tableID int, fecha string) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(
+		"SELECT COUNT(1) FROM Reservation WHERE table_id = $1 AND fecha = $2::timestamp AND estado = 1",
+		tableID,
+		fecha,
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
+}
+
 func (r *PostgresReservationRepository) GetByID(id int) (*models.Reservation, error) {
 	var reservation models.Reservation
 	err := r.DB.QueryRow(

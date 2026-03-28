@@ -37,7 +37,7 @@ func TestCreateReservation(t *testing.T) {
 			reservation: models.Reservation{
 				TableID:  999,
 				ClientID: 2,
-				Fecha:    "2026-03-27 19:00:00",
+				Fecha:    "2026-03-27 20:00:00",
 				Estado:   1,
 			},
 			expected: 500,
@@ -47,10 +47,20 @@ func TestCreateReservation(t *testing.T) {
 			reservation: models.Reservation{
 				TableID:  1,
 				ClientID: 999,
-				Fecha:    "2026-03-27 19:00:00",
+				Fecha:    "2026-03-27 21:00:00",
 				Estado:   1,
 			},
 			expected: 500,
+		},
+		{
+			name: "Create reservation when table not available",
+			reservation: models.Reservation{
+				TableID:  1,
+				ClientID: 2,
+				Fecha:    "2026-03-27 19:00:00",
+				Estado:   1,
+			},
+			expected: 409,
 		},
 	}
 

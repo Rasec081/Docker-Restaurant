@@ -58,6 +58,20 @@ func (h *ReservationHandler) CreateReservation(c *gin.Context) {
 		return
 	}
 
+	available, err := h.ReservationRepo.IsTableAvailable(r.TableID, r.Fecha)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	if !available {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "Mesa no disponible",
+		})
+		return
+	}
+
 	if err := h.ReservationRepo.Create(&r); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

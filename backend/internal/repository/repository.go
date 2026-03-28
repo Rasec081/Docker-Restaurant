@@ -34,7 +34,7 @@ type MenuRepository interface {
 type ReservationRepository interface {
 	Create(reservation *models.Reservation) error
 	Delete(id int) error
-	GetByID(id int) (*models.Reservation, error)
+	IsTableAvailable(tableID int, fecha string) (bool, error)
 }
 
 // OrderRepository define operaciones de órdenes

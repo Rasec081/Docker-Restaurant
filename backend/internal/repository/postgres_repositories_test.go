@@ -165,6 +165,21 @@ func TestPostgresReservationRepositoryCRUD(t *testing.T) {
 	if _, err := repo.GetByID(reservation.ID); err != nil {
 		t.Fatalf("GetByID error: %v", err)
 	}
+	available, err := repo.IsTableAvailable(1, reservation.Fecha)
+	if err != nil {
+		t.Fatalf("IsTableAvailable error: %v", err)
+	}
+	if available {
+		t.Fatal("esperaba mesa no disponible")
+	}
+
+	available, err = repo.IsTableAvailable(1, "2099-03-27 19:00:00")
+	if err != nil {
+		t.Fatalf("IsTableAvailable error: %v", err)
+	}
+	if !available {
+		t.Fatal("esperaba mesa disponible")
+	}
 
 	if err := repo.Delete(reservation.ID); err != nil {
 		t.Fatalf("Delete error: %v", err)
