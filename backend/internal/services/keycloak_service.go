@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 func getKeycloakBaseURL() string {
@@ -32,33 +33,45 @@ func GetAdminToken() (string, error) {
 	data.Set("password", "admin")
 	data.Set("grant_type", "password")
 
-	req, err := http.NewRequest(
-		"POST",
-		getKeycloakBaseURL()+"/realms/master/protocol/openid-connect/token",
-		bytes.NewBufferString(data.Encode()),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
 	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
+	endpoint := getKeycloakBaseURL() + "/realms/master/protocol/openid-connect/token"
+	var lastErr error
+
+	for i := 0; i < 5; i++ {
+		req, err := http.NewRequest(
+			"POST",
+			endpoint,
+			bytes.NewBufferString(data.Encode()),
+		)
+		if err != nil {
+			return "", err
+		}
+
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		defer resp.Body.Close()
+
+		var result map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&result)
+
+		token, ok := result["access_token"].(string)
+		if !ok {
+			return "", fmt.Errorf("no se pudo obtener el token")
+		}
+
+		return token, nil
 	}
-	defer resp.Body.Close()
 
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-
-	token, ok := result["access_token"].(string)
-	if !ok {
-		return "", fmt.Errorf("no se pudo obtener el token")
+	if lastErr != nil {
+		return "", lastErr
 	}
-
-	return token, nil
+	return "", fmt.Errorf("no se pudo obtener el token")
 }
 
 // ========================

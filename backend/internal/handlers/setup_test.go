@@ -2,10 +2,13 @@ package handlers
 
 import (
 	"database/sql"
+	"net/http"
 	"os"
 	"testing"
 
 	"restaurant-backend/internal/db"
+	"restaurant-backend/internal/repository"
+	"restaurant-backend/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -61,4 +64,28 @@ func setupTestData(t *testing.T) {
 
 	// Insertar tabla
 	testDB.Exec("INSERT INTO Tables (table_id, table_number, estado, restaurant_id) VALUES (1, 1, 1, 1) ON CONFLICT DO NOTHING")
+
+	// Sincronizar secuencias para inserts sin ID
+	testDB.Exec("SELECT setval('roles_role_id_seq', COALESCE(MAX(role_id), 1), true) FROM Roles")
+	testDB.Exec("SELECT setval('users_user_id_seq', COALESCE(MAX(user_id), 1), true) FROM Users")
+	testDB.Exec("SELECT setval('restaurant_restaurant_id_seq', COALESCE(MAX(restaurant_id), 1), true) FROM Restaurant")
+	testDB.Exec("SELECT setval('menu_menu_id_seq', COALESCE(MAX(menu_id), 1), true) FROM Menu")
+	testDB.Exec("SELECT setval('tables_table_id_seq', COALESCE(MAX(table_id), 1), true) FROM Tables")
+	testDB.Exec("SELECT setval('orders_orders_id_seq', COALESCE(MAX(orders_id), 1), true) FROM Orders")
+	testDB.Exec("SELECT setval('reservation_reservation_id_seq', COALESCE(MAX(reservation_id), 1), true) FROM Reservation")
+}
+
+func initIntegrationHandlers() {
+	menuRepo := repository.NewPostgresMenuRepository(testDB)
+	restaurantRepo := repository.NewPostgresRestaurantRepository(testDB)
+	userRepo := repository.NewPostgresUserRepository(testDB)
+	reservationRepo := repository.NewPostgresReservationRepository(testDB)
+	orderRepo := repository.NewPostgresOrderRepository(testDB)
+
+	InitMenuHandler(menuRepo)
+	InitRestaurantHandler(restaurantRepo)
+	InitUserHandler(userRepo)
+	InitReservationHandler(reservationRepo)
+	InitOrderHandler(orderRepo)
+	InitAuthHandler(userRepo, services.NewDefaultKeycloakService(), http.DefaultClient)
 }

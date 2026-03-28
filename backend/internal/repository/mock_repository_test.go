@@ -70,6 +70,9 @@ func TestMockMenuRepository(t *testing.T) {
 	if _, err := repo.GetByID(menu.ID); err != nil {
 		t.Fatalf("GetByID error: %v", err)
 	}
+	if _, err := repo.GetByID(999); err == nil {
+		t.Fatal("esperaba error en GetByID")
+	}
 
 	menu.Nombre = "Dish2"
 	if err := repo.Update(menu); err != nil {
