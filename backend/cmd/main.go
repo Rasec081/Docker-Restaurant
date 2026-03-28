@@ -23,22 +23,13 @@ func main() {
 	   admin debe de tener los 2 roles: admin y client
 	*/
 
-	// =========================
-	// 1. Cargar variables
-	// =========================
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("No se encuentra el .env")
 	}
 
-	// =========================
-	// 2. Conectar DB
-	// =========================
 	db.Connect()
 
-	// =========================
-	// 2.5 Inicializar handlers con repositorios (para compatibilidad con tests)
-	// =========================
 	// Crear repositorios que usan la BD global
 	menuRepo := repository.NewPostgresMenuRepository(db.DB)
 	restaurantRepo := repository.NewPostgresRestaurantRepository(db.DB)
@@ -54,14 +45,8 @@ func main() {
 	handlers.InitOrderHandler(orderRepo)
 	handlers.InitAuthHandler(userRepo, services.NewDefaultKeycloakService(), nil)
 
-	// =========================
-	// 3. Router
-	// =========================
 	router := gin.Default()
 
-	// =========================
-	// 4. Public routes
-	// =========================
 	router.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
@@ -71,14 +56,9 @@ func main() {
 	router.POST("/auth/register", handlers.Register)
 	router.POST("/auth/login", handlers.Login)
 
-	// =========================
-	// 5. Grupo protegido (JWT)
-	// =========================
 	protected := router.Group("/")
 
-	// =========================
-	// 6. Subgrupos por rol
-	// =========================
+	// Subgrupos por rol
 
 	// CLIENT
 	client := protected.Group("/")
@@ -88,9 +68,7 @@ func main() {
 	admin := protected.Group("/")
 	admin.Use(middleware.RequireRole("admin"))
 
-	// =========================
-	// 7. Rutas CLIENT
-	// =========================
+	// Rutas CLIENT
 
 	client.GET("/restaurants", handlers.GetRestaurants)
 	client.GET("/menus/:id", handlers.GetMenu)
@@ -100,9 +78,7 @@ func main() {
 	client.POST("/reservations", handlers.CreateReservation)
 	client.POST("/orders", handlers.CreateOrder)
 
-	// =========================
 	// 8. Rutas ADMIN
-	// =========================
 
 	admin.POST("/restaurants", handlers.CreateRestaurant)
 	admin.POST("/menus", handlers.CreateMenu)
@@ -114,9 +90,7 @@ func main() {
 	admin.DELETE("/menus/:id", handlers.DeleteMenu)
 	admin.DELETE("/reservations/:id", handlers.DeleteReservation)
 
-	// =========================
 	// 9. Puerto
-	// =========================
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
 		port = "8080"
