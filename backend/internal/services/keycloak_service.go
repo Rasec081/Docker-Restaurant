@@ -22,7 +22,7 @@ func GetAdminToken() (string, error) {
 
 	req, err := http.NewRequest(
 		"POST",
-		"http://keycloak:8080/realms/restaurant-realm/protocol/openid-connect/token",
+		"http://keycloak:8080/realms/master/protocol/openid-connect/token",
 		bytes.NewBufferString(data.Encode()),
 	)
 	if err != nil {

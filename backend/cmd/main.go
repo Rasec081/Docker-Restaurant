@@ -7,9 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-
 	_ "restaurant-backend/docs"
 	"restaurant-backend/internal/db"
 	"restaurant-backend/internal/handlers"
@@ -17,83 +14,90 @@ import (
 )
 
 func main() {
+
+	/*
+		admin debe de tener los 2 roles: admin y client
+	*/
+
+	// =========================
+	// 1. Cargar variables
+	// =========================
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("No se encuentra el .env")
 	}
 
-	// Busca en db y usa la funcion
+	// =========================
+	// 2. Conectar DB
+	// =========================
 	db.Connect()
 
-	// protected := gin.Default()
+	// =========================
+	// 3. Router
+	// =========================
 	router := gin.Default()
 
-	protected := router.Group("/")
-	protected.Use(middleware.JWTMiddleware())
-
 	// =========================
-	// 4. Rutas básicas
+	// 4. Public routes
 	// =========================
-
-	// health check
 	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		c.JSON(200, gin.H{"message": "pong"})
 	})
 
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	// 5. Rutas reales (handlers)
-	protected.GET("/restaurants", handlers.GetRestaurants)
-
-	protected.GET("/users/me", handlers.GetUserMe)
-
-	protected.GET("/menus/:id", handlers.GetMenu)
-
-	protected.GET("/orders/:id", handlers.GetOrder)
-
-	// POSTs
-	router.POST("/auth/register", handlers.Register) //:contentReference[oaicite:4]{index=4}
-
-	protected.POST("/restaurants", handlers.CreateRestaurant)
-
-	protected.POST("/reservations", handlers.CreateReservation)
-
-	protected.POST("/orders", handlers.CreateOrder)
-
-	protected.POST("/menus", handlers.CreateMenu)
-
-	// PUTs
-	protected.PUT("/users/:id", handlers.UpdateUser)
-
-	protected.PUT("/menus/:id", handlers.UpdateMenu)
-
-	// DELETEs
-	protected.DELETE("/reservations/:id", handlers.DeleteReservation)
-
-	protected.DELETE("/menus/:id", handlers.DeleteMenu)
-
-	protected.DELETE("/users/:id", handlers.DeleteUser)
-
-	//auth
+	router.POST("/auth/register", handlers.Register)
 	router.POST("/auth/login", handlers.Login)
 
-	// 6. Puerto dinámico
+	// =========================
+	// 5. Grupo protegido (JWT)
+	// =========================
+	protected := router.Group("/")
+
+	// =========================
+	// 6. Subgrupos por rol
+	// =========================
+
+	// CLIENT
+	client := protected.Group("/")
+	client.Use(middleware.RequireRole("client"))
+
+	// ADMIN
+	admin := protected.Group("/")
+	admin.Use(middleware.RequireRole("admin"))
+
+	// =========================
+	// 7. Rutas CLIENT
+	// =========================
+
+	client.GET("/restaurants", handlers.GetRestaurants)
+	client.GET("/menus/:id", handlers.GetMenu)
+	client.GET("/orders/:id", handlers.GetOrder)
+	client.GET("/users/me", handlers.GetUserMe)
+
+	client.POST("/reservations", handlers.CreateReservation)
+	client.POST("/orders", handlers.CreateOrder)
+
+	// =========================
+	// 8. Rutas ADMIN
+	// =========================
+
+	admin.POST("/restaurants", handlers.CreateRestaurant)
+	admin.POST("/menus", handlers.CreateMenu)
+
+	admin.PUT("/users/:id", handlers.UpdateUser)
+	admin.PUT("/menus/:id", handlers.UpdateMenu)
+
+	admin.DELETE("/users/:id", handlers.DeleteUser)
+	admin.DELETE("/menus/:id", handlers.DeleteMenu)
+	admin.DELETE("/reservations/:id", handlers.DeleteReservation)
+
+	// =========================
+	// 9. Puerto
+	// =========================
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// 7. Iniciar servidor
 	log.Println("Server corriendo en puerto", port)
 	router.Run(":" + port)
-
-	/*
-		#################################################
-		nota: si el usuario tiene una orden pendiente, no
-		se puede eliminar, independinetemente de su rol
-		#################################################
-	*/
-
 }

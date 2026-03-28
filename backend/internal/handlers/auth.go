@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"restaurant-backend/internal/db"
 	"restaurant-backend/internal/services"
 	"time"
 
@@ -41,6 +42,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// 1. Crear en Keycloak
 	_, err := services.CreateUserInKeycloak(
 		input.Username,
 		input.Email,
@@ -53,8 +55,24 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// 2. Crear en DB
+	var userID int
+	err = db.DB.QueryRow(
+		"INSERT INTO Users (nombre, role_id) VALUES ($1, $2) RETURNING user_id",
+		input.Username,
+		2, // client = 2
+	).Scan(&userID)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "usuario creado en Keycloak pero falló en DB",
+		})
+		return
+	}
+
 	c.JSON(201, gin.H{
 		"message": "Usuario creado correctamente",
+		"user_id": userID,
 	})
 }
 
