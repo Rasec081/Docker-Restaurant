@@ -2,17 +2,35 @@ package handlers
 
 import (
 	"net/http"
-	"restaurant-backend/internal/db"
+	"strconv"
+	"strings"
+
+	"restaurant-backend/internal/models"
+	"restaurant-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Reservation struct {
-	ID       int    `json:"id"`
-	TableID  int    `json:"table_id"`
-	ClientID int    `json:"client_id"`
-	Fecha    string `json:"fecha"`
-	Estado   int    `json:"estado"`
+// ReservationHandler maneja operaciones de reservas
+type ReservationHandler struct {
+	ReservationRepo repository.ReservationRepository
+}
+
+var reservationHandler *ReservationHandler
+
+// NewReservationHandler crea una nueva instancia
+func NewReservationHandler(reservationRepo repository.ReservationRepository) *ReservationHandler {
+	return &ReservationHandler{ReservationRepo: reservationRepo}
+}
+
+// InitReservationHandler inicializa el handler global (para rutas y tests)
+func InitReservationHandler(reservationRepo repository.ReservationRepository) {
+	reservationHandler = NewReservationHandler(reservationRepo)
+}
+
+func getReservationHandler() *ReservationHandler {
+	ensureReservationHandler()
+	return reservationHandler
 }
 
 // CreateReservation godoc
@@ -21,12 +39,17 @@ type Reservation struct {
 // @Tags reservations
 // @Accept json
 // @Produce json
-// @Param reservation body Reservation true "Datos de la reserva"
+// @Param reservation body models.Reservation true "Datos de la reserva"
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]string
 // @Router /reservations [post]
 func CreateReservation(c *gin.Context) {
-	var r Reservation
+	getReservationHandler().CreateReservation(c)
+}
+
+// CreateReservation godoc
+func (h *ReservationHandler) CreateReservation(c *gin.Context) {
+	var r models.Reservation
 
 	if err := c.ShouldBindJSON(&r); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -35,13 +58,7 @@ func CreateReservation(c *gin.Context) {
 		return
 	}
 
-	var id int
-	err := db.DB.QueryRow(
-		"INSERT INTO Reservation (table_id, client_id, fecha, estado) VALUES ($1, $2, $3, $4) RETURNING reservation_id",
-		r.TableID, r.ClientID, r.Fecha, r.Estado,
-	).Scan(&id)
-
-	if err != nil {
+	if err := h.ReservationRepo.Create(&r); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -50,7 +67,7 @@ func CreateReservation(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":        "Reserva creada correctamente",
-		"reservation_id": id,
+		"reservation_id": r.ID,
 	})
 }
 
@@ -65,25 +82,29 @@ func CreateReservation(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /reservations/{id} [delete]
 func DeleteReservation(c *gin.Context) {
-	id := c.Param("id")
+	getReservationHandler().DeleteReservation(c)
+}
 
-	result, err := db.DB.Exec(
-		"DELETE FROM Reservation WHERE reservation_id = $1",
-		id,
-	)
-
+// DeleteReservation godoc
+func (h *ReservationHandler) DeleteReservation(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID inválido",
 		})
 		return
 	}
 
-	rows, _ := result.RowsAffected()
-
-	if rows == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Reserva no encontrada",
+	if err := h.ReservationRepo.Delete(id); err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "no encontrada") || strings.Contains(strings.ToLower(err.Error()), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Reserva no encontrada",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}

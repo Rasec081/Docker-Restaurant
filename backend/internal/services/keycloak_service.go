@@ -7,7 +7,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 )
+
+func getKeycloakBaseURL() string {
+	if baseURL := os.Getenv("KEYCLOAK_ADMIN_URL"); baseURL != "" {
+		return strings.TrimRight(baseURL, "/")
+	}
+	if baseURL := os.Getenv("KEYCLOAK_URL"); baseURL != "" {
+		return strings.TrimRight(baseURL, "/")
+	}
+	return "http://keycloak:8080"
+}
 
 // ========================
 // Obtener token admin
@@ -22,7 +34,7 @@ func GetAdminToken() (string, error) {
 
 	req, err := http.NewRequest(
 		"POST",
-		"http://keycloak:8080/realms/master/protocol/openid-connect/token",
+		getKeycloakBaseURL()+"/realms/master/protocol/openid-connect/token",
 		bytes.NewBufferString(data.Encode()),
 	)
 	if err != nil {
@@ -65,7 +77,7 @@ func CreateUserInKeycloak(username, email, password, roleName string) (string, e
 	// ========================
 	// 2. Crear usuario
 	// ========================
-	createURL := "http://keycloak:8080/admin/realms/restaurant-realm/users"
+	createURL := getKeycloakBaseURL() + "/admin/realms/restaurant-realm/users"
 
 	body := map[string]interface{}{
 		"username":        username,
@@ -97,7 +109,7 @@ func CreateUserInKeycloak(username, email, password, roleName string) (string, e
 	// 3. Obtener userId
 	// ========================
 	searchURL := fmt.Sprintf(
-		"http://keycloak:8080/admin/realms/restaurant-realm/users?username=%s",
+		getKeycloakBaseURL()+"/admin/realms/restaurant-realm/users?username=%s",
 		username,
 	)
 
@@ -123,7 +135,7 @@ func CreateUserInKeycloak(username, email, password, roleName string) (string, e
 	// 4. Setear password
 	// ========================
 	passwordURL := fmt.Sprintf(
-		"http://keycloak:8080/admin/realms/restaurant-realm/users/%s/reset-password",
+		getKeycloakBaseURL()+"/admin/realms/restaurant-realm/users/%s/reset-password",
 		userID,
 	)
 
@@ -152,7 +164,7 @@ func CreateUserInKeycloak(username, email, password, roleName string) (string, e
 	// ========================
 	// 5. Obtener rol (FIX)
 	// ========================
-	rolesURL := "http://keycloak:8080/admin/realms/restaurant-realm/roles"
+	rolesURL := getKeycloakBaseURL() + "/admin/realms/restaurant-realm/roles"
 
 	reqRoles, _ := http.NewRequest("GET", rolesURL, nil)
 	reqRoles.Header.Set("Authorization", "Bearer "+adminToken)
@@ -182,7 +194,7 @@ func CreateUserInKeycloak(username, email, password, roleName string) (string, e
 	// 6. Asignar rol al usuario
 	// ========================
 	assignURL := fmt.Sprintf(
-		"http://keycloak:8080/admin/realms/restaurant-realm/users/%s/role-mappings/realm",
+		getKeycloakBaseURL()+"/admin/realms/restaurant-realm/users/%s/role-mappings/realm",
 		userID,
 	)
 
@@ -209,4 +221,15 @@ func CreateUserInKeycloak(username, email, password, roleName string) (string, e
 	}
 
 	return userID, nil
+}
+
+// DefaultKeycloakService adapta las funciones existentes para inyeccion
+type DefaultKeycloakService struct{}
+
+func NewDefaultKeycloakService() *DefaultKeycloakService {
+	return &DefaultKeycloakService{}
+}
+
+func (s *DefaultKeycloakService) CreateUser(username, email, password, roleName string) (string, error) {
+	return CreateUserInKeycloak(username, email, password, roleName)
 }

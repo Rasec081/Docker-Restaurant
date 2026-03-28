@@ -2,17 +2,35 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
-	"restaurant-backend/internal/db"
+	"restaurant-backend/internal/models"
+	"restaurant-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
 
-type User struct {
-	ID     int    `json:"id"`
-	Nombre string `json:"nombre"`
-	Rol    int    `json:"rol"`
+// UserHandler maneja operaciones de usuarios
+type UserHandler struct {
+	UserRepo repository.UserRepository
+}
+
+var userHandler *UserHandler
+
+// NewUserHandler crea una nueva instancia
+func NewUserHandler(userRepo repository.UserRepository) *UserHandler {
+	return &UserHandler{UserRepo: userRepo}
+}
+
+// InitUserHandler inicializa el handler global (para rutas y tests)
+func InitUserHandler(userRepo repository.UserRepository) {
+	userHandler = NewUserHandler(userRepo)
+}
+
+func getUserHandler() *UserHandler {
+	ensureUserHandler()
+	return userHandler
 }
 
 /*
@@ -23,11 +41,15 @@ funcion del get
 // @Description Retorna la información del usuario autenticado
 // @Tags users
 // @Produce json
-// @Success 200 {object} User
+// @Success 200 {object} models.User
 // @Failure 500 {object} map[string]string
 // @Router /users/me [get]
 func GetUserMe(c *gin.Context) {
+	getUserHandler().GetUserMe(c)
+}
 
+// GetUserMe godoc
+func (h *UserHandler) GetUserMe(c *gin.Context) {
 	usernameInterface, exists := c.Get("username")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -44,15 +66,7 @@ func GetUserMe(c *gin.Context) {
 		return
 	}
 
-	println("USERNAME:", username)
-
-	var user User
-
-	err := db.DB.QueryRow(
-		"SELECT user_id, nombre, role_id FROM Users WHERE nombre = $1",
-		username,
-	).Scan(&user.ID, &user.Nombre, &user.Rol)
-
+	user, err := h.UserRepo.GetByUsername(username)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Usuario no encontrado en DB",
@@ -73,24 +87,32 @@ funcion del update
 // @Accept json
 // @Produce json
 // @Param id path int true "ID del usuario"
-// @Param body body User true "Datos del usuario"
+// @Param body body models.User true "Datos del usuario"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /users/{id} [put]
 func UpdateUser(c *gin.Context) {
+	getUserHandler().UpdateUser(c)
+}
 
-	// sacamos la URL
-	id := c.Param("id") //no se si el id va a venir del jwt o de la url, hay que definirlo
+// UpdateUser godoc
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID inválido",
+		})
+		return
+	}
 
-	//el body (JSON)
 	var input struct {
 		Nombre string `json:"nombre"`
 		Rol    int    `json:"rol"`
 	}
 
-	//si hay error
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -98,34 +120,25 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	//emepzamos con el update
-	query := `
-		UPDATE Users
-		SET nombre = $1, role_id = $2
-		WHERE user_id = $3
-	`
+	user := models.User{
+		ID:     id,
+		Nombre: input.Nombre,
+		RoleID: input.Rol,
+	}
 
-	result, err := db.DB.Exec(query, input.Nombre, input.Rol, id)
-
-	//verificacionde si funkó
-	if err != nil {
+	if err := h.UserRepo.Update(&user); err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "no encontrado") || strings.Contains(strings.ToLower(err.Error()), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Usuario no encontrado",
+			})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	//ocupamos saber que si existe ese usuario para dar la respuesta correcta
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Usuario no encontrado",
-		})
-		return
-	}
-
-	//damos la repsues que si funciono
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Usuario actualizado correctamente",
 	})
@@ -164,45 +177,39 @@ VALUES ('Test Delete', 1);
 // @Failure 500 {object} map[string]string
 // @Router /users/{id} [delete]
 func DeleteUser(c *gin.Context) {
+	getUserHandler().DeleteUser(c)
+}
 
-	id := c.Param("id")
-
-	query := `
-		DELETE FROM Users
-		WHERE user_id = $1
-	`
-
-	result, err := db.DB.Exec(query, id)
-
-	//Manejo de errores
+// DeleteUser godoc
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID inválido",
+		})
+		return
+	}
 
-		// Error de foreign key (como el que te salió)
+	if err := h.UserRepo.Delete(id); err != nil {
 		if strings.Contains(err.Error(), "violates foreign key") {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "No se puede eliminar el usuario porque tiene datos asociados",
 			})
 			return
 		}
-
-		// Error general
+		if strings.Contains(strings.ToLower(err.Error()), "no encontrado") || strings.Contains(strings.ToLower(err.Error()), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Usuario no encontrado",
+			})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	//Verificar si realmente borró algo
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Usuario no encontrado",
-		})
-		return
-	}
-
-	//se logro
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Usuario eliminado correctamente",
 	})

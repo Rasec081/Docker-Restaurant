@@ -14,12 +14,13 @@ import (
 	"restaurant-backend/internal/db"
 	"restaurant-backend/internal/handlers"
 	"restaurant-backend/internal/middleware"
+	"restaurant-backend/internal/repository"
+	"restaurant-backend/internal/services"
 )
 
 func main() {
-
 	/*
-		admin debe de tener los 2 roles: admin y client
+	   admin debe de tener los 2 roles: admin y client
 	*/
 
 	// =========================
@@ -34,6 +35,24 @@ func main() {
 	// 2. Conectar DB
 	// =========================
 	db.Connect()
+
+	// =========================
+	// 2.5 Inicializar handlers con repositorios (para compatibilidad con tests)
+	// =========================
+	// Crear repositorios que usan la BD global
+	menuRepo := repository.NewPostgresMenuRepository(db.DB)
+	restaurantRepo := repository.NewPostgresRestaurantRepository(db.DB)
+	userRepo := repository.NewPostgresUserRepository(db.DB)
+	reservationRepo := repository.NewPostgresReservationRepository(db.DB)
+	orderRepo := repository.NewPostgresOrderRepository(db.DB)
+
+	// Inicializar handlers con repositorios (opcional, para tests)
+	handlers.InitMenuHandler(menuRepo)
+	handlers.InitRestaurantHandler(restaurantRepo)
+	handlers.InitUserHandler(userRepo)
+	handlers.InitReservationHandler(reservationRepo)
+	handlers.InitOrderHandler(orderRepo)
+	handlers.InitAuthHandler(userRepo, services.NewDefaultKeycloakService(), nil)
 
 	// =========================
 	// 3. Router

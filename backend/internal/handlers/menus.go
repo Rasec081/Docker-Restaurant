@@ -1,20 +1,40 @@
 package handlers
 
 import (
-	"database/sql"
 	"net/http"
-	"strings"
+	"strconv"
 
-	"restaurant-backend/internal/db"
+	"restaurant-backend/internal/models"
+	"restaurant-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Menu struct {
-	ID           int     `json:"id"`
-	Nombre       string  `json:"nombre"`
-	Precio       float64 `json:"precio"`
-	RestaurantID int     `json:"restaurant_id"`
+// MenuHandler maneja las operaciones de menús
+type MenuHandler struct {
+	MenuRepo repository.MenuRepository
+}
+
+var menuHandler *MenuHandler
+
+// NewMenuHandler crea una nueva instancia de MenuHandler
+func NewMenuHandler(menuRepo repository.MenuRepository) *MenuHandler {
+	return &MenuHandler{MenuRepo: menuRepo}
+}
+
+// InitMenuHandler inicializa el handler global (para rutas y tests)
+func InitMenuHandler(menuRepo repository.MenuRepository) {
+	menuHandler = NewMenuHandler(menuRepo)
+}
+
+func getMenuHandler() *MenuHandler {
+	ensureMenuHandler()
+	return menuHandler
+}
+
+// GetMenu expone el handler global
+func GetMenu(c *gin.Context) {
+	getMenuHandler().GetMenu(c)
 }
 
 // GetMenu godoc
@@ -23,37 +43,30 @@ type Menu struct {
 // @Tags menus
 // @Produce json
 // @Param id path int true "ID del menú"
-// @Success 200 {object} Menu
+// @Success 200 {object} models.Menu
+// @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
 // @Router /menus/{id} [get]
-func GetMenu(c *gin.Context) {
-
-	id := c.Param("id")
-
-	var menu Menu
-
-	err := db.DB.QueryRow(
-		"SELECT menu_id, dish_name, price, restaurant_id FROM Menu WHERE menu_id = $1",
-		id,
-	).Scan(&menu.ID, &menu.Nombre, &menu.Precio, &menu.RestaurantID)
-
+func (h *MenuHandler) GetMenu(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
 
-		if err == sql.ErrNoRows {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Menú no encontrado",
-			})
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+	menu, err := h.MenuRepo.GetByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Menú no encontrado"})
 		return
 	}
 
 	c.JSON(http.StatusOK, menu)
+}
+
+// CreateMenu expone el handler global
+func CreateMenu(c *gin.Context) {
+	getMenuHandler().CreateMenu(c)
 }
 
 // CreateMenu godoc
@@ -62,52 +75,38 @@ func GetMenu(c *gin.Context) {
 // @Tags menus
 // @Accept json
 // @Produce json
-// @Param body body Menu true "Datos del menú"
+// @Param body body models.Menu true "Datos del menú"
 // @Success 201 {object} map[string]interface{}
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /menus [post]
-// Funcion del POST /menus
-func CreateMenu(c *gin.Context) {
+func (h *MenuHandler) CreateMenu(c *gin.Context) {
+	var menu models.Menu
 
-	var m Menu
-
-	//Leer JSON
-	if err := c.ShouldBindJSON(&m); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "JSON inválido",
-		})
+	if err := c.ShouldBindJSON(&menu); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
 		return
 	}
 
-	if m.Nombre == "" || m.Precio <= 0 || m.RestaurantID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Datos inválidos",
-		})
+	if menu.Nombre == "" || menu.Precio <= 0 || menu.RestaurantID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
 		return
 	}
 
-	// Insertar en DB
-	var menuID int
-	err := db.DB.QueryRow(
-		`INSERT INTO Menu (dish_name, price, restaurant_id)
-		 VALUES ($1, $2, $3)
-		 RETURNING menu_id`,
-		m.Nombre, m.Precio, m.RestaurantID,
-	).Scan(&menuID)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+	if err := h.MenuRepo.Create(&menu); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	//Respuesta
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Menú creado exitosamente",
-		"id":      menuID,
+		"id":      menu.ID,
 	})
+}
+
+// UpdateMenu expone el handler global
+func UpdateMenu(c *gin.Context) {
+	getMenuHandler().UpdateMenu(c)
 }
 
 // UpdateMenu godoc
@@ -117,72 +116,37 @@ func CreateMenu(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID del menú"
-// @Param body body Menu true "Datos actualizados"
+// @Param body body models.Menu true "Datos actualizados"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
 // @Router /menus/{id} [put]
-// PUT /menus/:id
-func UpdateMenu(c *gin.Context) {
-
-	id := c.Param("id")
-
-	var input struct {
-		Nombre       string  `json:"nombre"`
-		Precio       float64 `json:"precio"`
-		RestaurantID int     `json:"restaurant_id"`
-	}
-
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "JSON inválido",
-		})
-		return
-	}
-
-	if input.Nombre == "" || input.Precio <= 0 || input.RestaurantID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Datos inválidos",
-		})
-		return
-	}
-
-	query := `
-		UPDATE Menu
-		SET dish_name = $1, price = $2, restaurant_id = $3
-		WHERE menu_id = $4
-	`
-
-	result, err := db.DB.Exec(query, input.Nombre, input.Precio, input.RestaurantID, id)
-
+func (h *MenuHandler) UpdateMenu(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-
-		if strings.Contains(err.Error(), "violates foreign key") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "restaurant_id no válido",
-			})
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
 
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Menú no encontrado",
-		})
+	var menu models.Menu
+	if err := c.ShouldBindJSON(&menu); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Menú actualizado correctamente",
-	})
+	menu.ID = id
+	if err := h.MenuRepo.Update(&menu); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Menú actualizado correctamente"})
+}
+
+// DeleteMenu expone el handler global
+func DeleteMenu(c *gin.Context) {
+	getMenuHandler().DeleteMenu(c)
 }
 
 // DeleteMenu godoc
@@ -194,44 +158,19 @@ func UpdateMenu(c *gin.Context) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
 // @Router /menus/{id} [delete]
-// delete /menus/:id
-func DeleteMenu(c *gin.Context) {
-
-	id := c.Param("id")
-
-	query := `
-		DELETE FROM Menu
-		WHERE menu_id = $1
-	`
-
-	result, err := db.DB.Exec(query, id)
-
+func (h *MenuHandler) DeleteMenu(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		if strings.Contains(err.Error(), "violates foreign key") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "No se puede eliminar el menú porque tiene datos asociados",
-			})
-			return
-		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
 	}
 
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Menú no encontrado",
-		})
+	if err := h.MenuRepo.Delete(id); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Menú eliminado correctamente",
-	})
+	c.JSON(http.StatusOK, gin.H{"message": "Menú eliminado correctamente"})
 }
