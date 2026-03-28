@@ -19,6 +19,17 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// Register godoc
+// @Summary Registrar usuario
+// @Description Crea un usuario en Keycloak
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body object true "Datos de registro"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /register [post]
 func Register(c *gin.Context) {
 	var input struct {
 		Username string `json:"username"`
@@ -65,6 +76,18 @@ func Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary Login de usuario
+// @Description Autentica un usuario contra Keycloak y devuelve el token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body LoginRequest true "Credenciales de usuario"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /login [post]
 func Login(c *gin.Context) {
 
 	// =========================

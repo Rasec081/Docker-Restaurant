@@ -14,6 +14,14 @@ type Restaurant struct {
 	AdminID int    `json:"admin_id"`
 }
 
+// GetRestaurants godoc
+// @Summary Obtener todos los restaurantes
+// @Description Retorna una lista de restaurantes
+// @Tags restaurants
+// @Produce json
+// @Success 200 {array} Restaurant
+// @Failure 500 {object} map[string]string
+// @Router /restaurants [get]
 func GetRestaurants(c *gin.Context) {
 
 	rows, err := db.DB.Query("SELECT restaurant_id, nombre, estado FROM restaurant")
@@ -42,6 +50,17 @@ func GetRestaurants(c *gin.Context) {
 	c.JSON(http.StatusOK, restaurants)
 }
 
+// CreateRestaurant godoc
+// @Summary Crear restaurante
+// @Description Crea un nuevo restaurante
+// @Tags restaurants
+// @Accept json
+// @Produce json
+// @Param body body Restaurant true "Datos del restaurante"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /restaurants [post]
 func CreateRestaurant(c *gin.Context) {
 	var r Restaurant
 

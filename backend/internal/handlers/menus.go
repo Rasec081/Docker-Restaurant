@@ -17,6 +17,16 @@ type Menu struct {
 	RestaurantID int     `json:"restaurant_id"`
 }
 
+// GetMenu godoc
+// @Summary Obtener menú por ID
+// @Description Retorna un menú específico
+// @Tags menus
+// @Produce json
+// @Param id path int true "ID del menú"
+// @Success 200 {object} Menu
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /menus/{id} [get]
 func GetMenu(c *gin.Context) {
 
 	id := c.Param("id")
@@ -46,6 +56,17 @@ func GetMenu(c *gin.Context) {
 	c.JSON(http.StatusOK, menu)
 }
 
+// CreateMenu godoc
+// @Summary Crear menú
+// @Description Crea un nuevo menú
+// @Tags menus
+// @Accept json
+// @Produce json
+// @Param body body Menu true "Datos del menú"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /menus [post]
 // Funcion del POST /menus
 func CreateMenu(c *gin.Context) {
 
@@ -89,6 +110,19 @@ func CreateMenu(c *gin.Context) {
 	})
 }
 
+// UpdateMenu godoc
+// @Summary Actualizar menú
+// @Description Actualiza un menú existente
+// @Tags menus
+// @Accept json
+// @Produce json
+// @Param id path int true "ID del menú"
+// @Param body body Menu true "Datos actualizados"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /menus/{id} [put]
 // PUT /menus/:id
 func UpdateMenu(c *gin.Context) {
 
@@ -151,6 +185,17 @@ func UpdateMenu(c *gin.Context) {
 	})
 }
 
+// DeleteMenu godoc
+// @Summary Eliminar menú
+// @Description Elimina un menú por ID
+// @Tags menus
+// @Produce json
+// @Param id path int true "ID del menú"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /menus/{id} [delete]
 // delete /menus/:id
 func DeleteMenu(c *gin.Context) {
 

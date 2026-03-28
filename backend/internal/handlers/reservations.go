@@ -15,6 +15,16 @@ type Reservation struct {
 	Estado   int    `json:"estado"`
 }
 
+// CreateReservation godoc
+// @Summary Crear una reserva
+// @Description Crea una nueva reserva en el sistema
+// @Tags reservations
+// @Accept json
+// @Produce json
+// @Param reservation body Reservation true "Datos de la reserva"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Router /reservations [post]
 func CreateReservation(c *gin.Context) {
 	var r Reservation
 
@@ -44,6 +54,16 @@ func CreateReservation(c *gin.Context) {
 	})
 }
 
+// DeleteReservation godoc
+// @Summary Eliminar reserva
+// @Description Cancela una reserva por ID
+// @Tags reservations
+// @Produce json
+// @Param id path int true "ID de la reserva"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /reservations/{id} [delete]
 func DeleteReservation(c *gin.Context) {
 	id := c.Param("id")
 
