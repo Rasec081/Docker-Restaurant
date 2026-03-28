@@ -18,6 +18,14 @@ type User struct {
 /*
 funcion del get
 */
+// GetUserMe godoc
+// @Summary Obtener usuario actual
+// @Description Retorna la información del usuario autenticado
+// @Tags users
+// @Produce json
+// @Success 200 {object} User
+// @Failure 500 {object} map[string]string
+// @Router /users/me [get]
 func GetUserMe(c *gin.Context) {
 	row := db.DB.QueryRow("SELECT user_id, nombre, role_id FROM Users WHERE user_id = 1") // Despues el where tiene que venir del jwk
 
@@ -36,6 +44,19 @@ func GetUserMe(c *gin.Context) {
 /*
 funcion del update
 */
+// UpdateUser godoc
+// @Summary Actualizar usuario
+// @Description Actualiza los datos de un usuario
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path int true "ID del usuario"
+// @Param body body User true "Datos del usuario"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users/{id} [put]
 func UpdateUser(c *gin.Context) {
 
 	// sacamos la URL
@@ -109,6 +130,17 @@ VALUES ('Test Delete', 1);
 
 6- verificamos que se borró con el comando: SELECT * FROM Users;
 */
+// DeleteUser godoc
+// @Summary Eliminar usuario
+// @Description Elimina un usuario por ID
+// @Tags users
+// @Produce json
+// @Param id path int true "ID del usuario"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users/{id} [delete]
 func DeleteUser(c *gin.Context) {
 
 	id := c.Param("id")

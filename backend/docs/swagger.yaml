@@ -1,0 +1,579 @@
+definitions:
+  handlers.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.Menu:
+    properties:
+      id:
+        type: integer
+      nombre:
+        type: string
+      precio:
+        type: number
+      restaurant_id:
+        type: integer
+    type: object
+  handlers.Order:
+    properties:
+      client_id:
+        type: integer
+      id:
+        type: integer
+      orders_type:
+        type: string
+      restaurant_id:
+        type: integer
+      table_id:
+        type: integer
+    type: object
+  handlers.Reservation:
+    properties:
+      client_id:
+        type: integer
+      estado:
+        type: integer
+      fecha:
+        type: string
+      id:
+        type: integer
+      table_id:
+        type: integer
+    type: object
+  handlers.Restaurant:
+    properties:
+      admin_id:
+        type: integer
+      estado:
+        type: integer
+      id:
+        type: integer
+      nombre:
+        type: string
+    type: object
+  handlers.User:
+    properties:
+      id:
+        type: integer
+      nombre:
+        type: string
+      rol:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica un usuario contra Keycloak y devuelve el token
+      parameters:
+      - description: Credenciales de usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login de usuario
+      tags:
+      - auth
+  /menus:
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo menú
+      parameters:
+      - description: Datos del menú
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Menu'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear menú
+      tags:
+      - menus
+  /menus/{id}:
+    delete:
+      description: Elimina un menú por ID
+      parameters:
+      - description: ID del menú
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Eliminar menú
+      tags:
+      - menus
+    get:
+      description: Retorna un menú específico
+      parameters:
+      - description: ID del menú
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Menu'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener menú por ID
+      tags:
+      - menus
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un menú existente
+      parameters:
+      - description: ID del menú
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos actualizados
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Menu'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Actualizar menú
+      tags:
+      - menus
+  /orders:
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva orden
+      parameters:
+      - description: Datos de la orden
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Order'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear orden
+      tags:
+      - orders
+  /orders/{id}:
+    get:
+      description: Retorna una orden específica
+      parameters:
+      - description: ID de la orden
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Order'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener orden por ID
+      tags:
+      - orders
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Crea un usuario en Keycloak
+      parameters:
+      - description: Datos de registro
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Registrar usuario
+      tags:
+      - auth
+  /reservations:
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva reserva en el sistema
+      parameters:
+      - description: Datos de la reserva
+        in: body
+        name: reservation
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Reservation'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear una reserva
+      tags:
+      - reservations
+  /reservations/{id}:
+    delete:
+      description: Cancela una reserva por ID
+      parameters:
+      - description: ID de la reserva
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Eliminar reserva
+      tags:
+      - reservations
+  /restaurants:
+    get:
+      description: Retorna una lista de restaurantes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.Restaurant'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener todos los restaurantes
+      tags:
+      - restaurants
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo restaurante
+      parameters:
+      - description: Datos del restaurante
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Restaurant'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear restaurante
+      tags:
+      - restaurants
+  /users/{id}:
+    delete:
+      description: Elimina un usuario por ID
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Eliminar usuario
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los datos de un usuario
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos del usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Actualizar usuario
+      tags:
+      - users
+  /users/me:
+    get:
+      description: Retorna la información del usuario autenticado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.User'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener usuario actual
+      tags:
+      - users
+swagger: "2.0"

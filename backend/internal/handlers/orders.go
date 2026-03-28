@@ -16,6 +16,15 @@ type Order struct {
 	RestaurantID int    `json:"restaurant_id"`
 }
 
+// GetOrder godoc
+// @Summary Obtener orden por ID
+// @Description Retorna una orden específica
+// @Tags orders
+// @Produce json
+// @Param id path int true "ID de la orden"
+// @Success 200 {object} Order
+// @Failure 404 {object} map[string]string
+// @Router /orders/{id} [get]
 func GetOrder(c *gin.Context) {
 	id := c.Param("id")
 
@@ -36,6 +45,17 @@ func GetOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, o)
 }
 
+// CreateOrder godoc
+// @Summary Crear orden
+// @Description Crea una nueva orden
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param body body Order true "Datos de la orden"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /orders [post]
 func CreateOrder(c *gin.Context) {
 	var o Order
 

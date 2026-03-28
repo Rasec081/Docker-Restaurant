@@ -7,13 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "restaurant-backend/docs"
 	"restaurant-backend/internal/db"
 	"restaurant-backend/internal/handlers"
 	"restaurant-backend/internal/middleware"
-	//"restaurant-backend/internal/handlers"
 )
 
-// La funcion que va a correr todo
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -39,6 +41,8 @@ func main() {
 			"message": "pong",
 		})
 	})
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 5. Rutas reales (handlers)
 	protected.GET("/restaurants", handlers.GetRestaurants)
