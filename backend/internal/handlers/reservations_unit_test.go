@@ -64,6 +64,36 @@ func TestReservationHandlers_WithMock(t *testing.T) {
 		}
 	})
 
+	t.Run("CreateReservation table not available", func(t *testing.T) {
+		mockRepo.Reservations[1] = &models.Reservation{ID: 1, TableID: 1, ClientID: 2, Fecha: "2026-03-27 19:00:00", Estado: 1}
+		reservation := models.Reservation{TableID: 1, ClientID: 2, Fecha: "2026-03-27 19:00:00", Estado: 1}
+		body, _ := json.Marshal(reservation)
+		req, _ := http.NewRequest("POST", "/reservations", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusConflict {
+			t.Fatalf("Esperaba %d, obtuvo %d", http.StatusConflict, w.Code)
+		}
+	})
+
+	t.Run("CreateReservation availability error", func(t *testing.T) {
+		mockRepo.AvailabilityError = errTest
+		defer func() { mockRepo.AvailabilityError = nil }()
+
+		reservation := models.Reservation{TableID: 2, ClientID: 2, Fecha: "2026-03-28 19:00:00", Estado: 1}
+		body, _ := json.Marshal(reservation)
+		req, _ := http.NewRequest("POST", "/reservations", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusInternalServerError {
+			t.Fatalf("Esperaba %d, obtuvo %d", http.StatusInternalServerError, w.Code)
+		}
+	})
+
 	t.Run("DeleteReservation ok", func(t *testing.T) {
 		reservation := &models.Reservation{ID: 1, TableID: 1, ClientID: 2, Fecha: "2026-03-27 19:00:00", Estado: 1}
 		mockRepo.Reservations[1] = reservation

@@ -193,10 +193,11 @@ func (m *MockRestaurantRepository) Delete(id int) error {
 
 // MockReservationRepository
 type MockReservationRepository struct {
-	Reservations map[int]*models.Reservation
-	CreateError  error
-	DeleteError  error
-	NextID       int
+	Reservations      map[int]*models.Reservation
+	CreateError       error
+	DeleteError       error
+	AvailabilityError error
+	NextID            int
 }
 
 func NewMockReservationRepository() *MockReservationRepository {
@@ -232,6 +233,18 @@ func (m *MockReservationRepository) GetByID(id int) (*models.Reservation, error)
 		return reservation, nil
 	}
 	return nil, errors.New("reservation not found")
+}
+
+func (m *MockReservationRepository) IsTableAvailable(tableID int, fecha string) (bool, error) {
+	if m.AvailabilityError != nil {
+		return false, m.AvailabilityError
+	}
+	for _, reservation := range m.Reservations {
+		if reservation.TableID == tableID && reservation.Fecha == fecha && reservation.Estado == 1 {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 // MockOrderRepository
