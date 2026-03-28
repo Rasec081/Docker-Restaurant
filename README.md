@@ -95,7 +95,7 @@ Una vez ejecutado el sistema, se puede acceder a:
 - **Backend:**  
   http://localhost:8080  
 
-- **Swagger (documentación):**  
+- **Swagger:**  
   http://localhost:8080/swagger/index.html  
 
 - **Keycloak:**  
@@ -115,6 +115,7 @@ Sistema de autenticación y autorización que permite:
 Herramienta utilizada para documentar la API, permitiendo:
 - Visualizar endpoints  
 - Probar endpoints directamente desde el navegador  
+<img width="1916" height="980" alt="image" src="https://github.com/user-attachments/assets/45ce6a3b-ab0b-43ab-9a71-ae37658bafe1" />
 
 ### Thunder Client
 Extensión utilizada para realizar pruebas de endpoints desde VS Code.
