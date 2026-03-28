@@ -49,6 +49,18 @@
   "roles": {
     "realm": [
       {
+        "name": "admin",
+        "description": "Administrator role",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "client",
+        "description": "Client role",
+        "composite": false,
+        "clientRole": false
+      },
+      {
         "id": "1f91adf7-980e-453a-bc5d-62924d2126d8",
         "name": "offline_access",
         "description": "${role_offline-access}",
