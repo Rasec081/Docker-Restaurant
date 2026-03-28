@@ -19,13 +19,25 @@ type User struct {
 funcion del get
 */
 func GetUserMe(c *gin.Context) {
-	row := db.DB.QueryRow("SELECT user_id, nombre, role_id FROM Users WHERE user_id = 1") // Despues el where tiene que venir del jwk
+
+	username, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "usuario no autenticado",
+		})
+		return
+	}
 
 	var user User
-	err := row.Scan(&user.ID, &user.Nombre, &user.Rol)
+
+	err := db.DB.QueryRow(
+		"SELECT user_id, nombre, role_id FROM Users WHERE nombre = $1",
+		username,
+	).Scan(&user.ID, &user.Nombre, &user.Rol)
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Usuario no encontrado en DB",
 		})
 		return
 	}
