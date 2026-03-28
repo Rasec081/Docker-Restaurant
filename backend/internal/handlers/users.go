@@ -20,13 +20,23 @@ funcion del get
 */
 func GetUserMe(c *gin.Context) {
 
-	username, exists := c.Get("username")
+	usernameInterface, exists := c.Get("username")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "usuario no autenticado",
 		})
 		return
 	}
+
+	username, ok := usernameInterface.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error procesando username",
+		})
+		return
+	}
+
+	println("USERNAME:", username)
 
 	var user User
 
