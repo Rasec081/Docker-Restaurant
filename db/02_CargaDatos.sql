@@ -1,9 +1,8 @@
 /********************ROLES*******************/
-INSERT INTO Roles(nombre)
+INSERT INTO Roles (role_id, nombre) 
     VALUES 
-        ('Admin'),
-        ('Client')
-    ;
+        (1, 'Admin'),
+        (2, 'Client');
 
 /********************USERS*******************/
 INSERT INTO Users (nombre, role_id)
@@ -96,3 +95,5 @@ INSERT INTO Reservation (table_id, client_id, fecha, estado)
         (2, 5, '2024-06-11 20:00:00', 1),
         (3, 6, '2024-06-12 21:00:00', 1)
     ;
+
+

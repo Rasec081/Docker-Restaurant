@@ -165,6 +165,7 @@ func TestReservationHandlers_WithMock(t *testing.T) {
 	})
 
 	t.Run("CreateReservation repo error", func(t *testing.T) {
+		mockRepo.Reservations = make(map[int]*models.Reservation)
 		mockRepo.CreateError = errTest
 		defer func() { mockRepo.CreateError = nil }()
 
