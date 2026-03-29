@@ -7,20 +7,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"restaurant-backend/internal/repository"
+
 	"github.com/gin-gonic/gin"
 )
 
 func TestUsersIntegration(t *testing.T) {
 	setupTestData(t)
-	initIntegrationHandlers()
+	handler := NewUserHandler(repository.NewPostgresUserRepository(testDB))
 
 	router := gin.Default()
 	router.GET("/users/me", func(c *gin.Context) {
 		c.Set("username", "admin")
-		GetUserMe(c)
+		handler.GetUserMe(c)
 	})
-	router.PUT("/users/:id", UpdateUser)
-	router.DELETE("/users/:id", DeleteUser)
+	router.PUT("/users/:id", handler.UpdateUser)
+	router.DELETE("/users/:id", handler.DeleteUser)
 
 	getReq, _ := http.NewRequest("GET", "/users/me", nil)
 	getW := httptest.NewRecorder()
