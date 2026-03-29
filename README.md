@@ -99,7 +99,7 @@ Una vez ejecutado el sistema, se puede acceder a:
   http://localhost:8080/swagger/index.html  
 
 - **Keycloak:**  
-  http://localhost:8080  
+  http://localhost:8081/admin
 
 ---
 
